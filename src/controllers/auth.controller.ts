@@ -66,19 +66,38 @@ export const Login = async (req: Request, res: Response) => {
 
 
 export const AuthenticatedUser = async (req: Request, res: Response) => {
-    const jwt = req.cookies["jwt"]
 
-    const payload: any = verify(jwt, "VeryScecretKey2023")
+    try {
+        const jwt = req.cookies["jwt"]
 
-    if (!payload) {
+        const payload: any = verify(jwt, "VeryScecretKey2023")
+
+        if (!payload) {
+            return res.status(401).send({
+                message: "unauthenticated"
+            })
+        }
+
+        const repository = getManager().getRepository(User)
+
+        const { password, ...user } = await repository.findOneBy({ id: payload.id })
+
+        res.send(user)
+
+    } catch (e) {
         return res.status(401).send({
             message: "unauthenticated"
         })
     }
 
-    const repository = getManager().getRepository(User)
+}
 
-    const { password, ...user } = await repository.findOneBy({ id: payload.id })
 
-    res.send(user)
+
+export const Logout = async (req: Request, res: Response) => {
+    res.cookie("jwt", "", { maxAge: 0 })
+
+    res.send({
+        message: "success"
+    })
 }
