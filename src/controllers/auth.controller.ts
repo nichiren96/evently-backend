@@ -3,7 +3,7 @@ import { getManager } from "typeorm";
 import { User } from "../entities/user.entity";
 import { RegisterValidation } from "../validations/register.validation";
 import bcryptjs from "bcryptjs"
-import { sign } from "jsonwebtoken";
+import { sign, verify } from "jsonwebtoken";
 
 export const Register = async (req: Request, res: Response) => {
 
@@ -62,4 +62,23 @@ export const Login = async (req: Request, res: Response) => {
         message: "success"
     })
 
+}
+
+
+export const AuthenticatedUser = async (req: Request, res: Response) => {
+    const jwt = req.cookies["jwt"]
+
+    const payload: any = verify(jwt, "VeryScecretKey2023")
+
+    if (!payload) {
+        return res.status(401).send({
+            message: "unauthenticated"
+        })
+    }
+
+    const repository = getManager().getRepository(User)
+
+    const { password, ...user } = await repository.findOneBy({ id: payload.id })
+
+    res.send(user)
 }
